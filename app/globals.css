@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/* Custom color palette */
+@theme {
+  --color-primary: #825846;
+  --color-sand: #e4d8c9;
+  --color-cream: #f2ebe1;
+  --color-cream-light: #faf5ee;
+  --color-earth: #464340;
+  --color-accent: #8f4e1f;
+  --color-rose-warm: #b67180;
+  --color-forest: #2e4b47;
+  --color-stone-dark: #54595f;
+}
+
+/* Font variables from Next.js font system */
+@theme inline {
+  --font-heading: var(--font-marcellus);
+  --font-body: var(--font-jost);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream-light);
+  color: var(--color-earth);
+  font-family: var(--font-jost), system-ui, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}

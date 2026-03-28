@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: groeipracht
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: groeipracht
+  template:
+    metadata:
+      labels:
+        app: groeipracht
+    spec:
+      containers:
+        - name: groeipracht
+          image: harbor-192-168-0-90.nip.io/clusterrace/groeipracht
+          ports:
+            - containerPort: 3000
+      imagePullSecrets:
+        - name: registry-credentials
