@@ -1,0 +1,76 @@
+version: v2beta1
+name: groeipracht
+
+vars:
+  DEVSPACE_FLAGS: "-n groeipracht"
+  BUILDKITD_AMD64: tcp://buildkitd-amd64-192-168-0-90.traefik.me:1234
+  BUILDKITD_ARM64: tcp://buildkitd-arm64-192-168-0-90.traefik.me:1235
+
+pipelines:
+  dev:
+    run: |-
+      run_dependency_pipelines --all
+      ensure_pull_secrets --all
+      create_deployments --all
+      start_dev --all
+  deploy:
+    run: |-
+      run_dependency_pipelines --all
+      ensure_pull_secrets --all
+      build_images --all -t $(date +%Y.%m.%d-%H%M%S)
+      create_deployments --all
+
+images:
+  groeipracht:
+    image: harbor-192-168-0-90.nip.io/clusterrace/groeipracht
+    custom:
+      skipImageArg: true
+      command: |-
+        bash -c '
+        set -euo pipefail
+        IMAGE=${runtime.images.groeipracht.image}
+        TAG=${runtime.images.groeipracht.tag}
+
+        buildctl --addr ${BUILDKITD_AMD64} build \
+          --frontend dockerfile.v0 \
+          --local context=. \
+          --local dockerfile=. \
+          --opt filename=Dockerfile \
+          --opt platform=linux/amd64 \
+          --output "type=image,name=${IMAGE}:${TAG}-amd64,push=true"
+
+        buildctl --addr ${BUILDKITD_ARM64} build \
+          --frontend dockerfile.v0 \
+          --local context=. \
+          --local dockerfile=. \
+          --opt filename=Dockerfile \
+          --opt platform=linux/arm64 \
+          --output "type=image,name=${IMAGE}:${TAG}-arm64,push=true"
+
+        crane index append \
+          --manifest "${IMAGE}:${TAG}-amd64" \
+          --manifest "${IMAGE}:${TAG}-arm64" \
+          --tag "${IMAGE}:${TAG}"
+        '
+
+deployments:
+  groeipracht:
+    kubectl:
+      kustomize: true
+      manifests:
+        - kube/kustomization
+
+dev:
+  groeipracht:
+    imageSelector: harbor-192-168-0-90.nip.io/clusterrace/groeipracht
+    devImage: node:25-bookworm
+    command: ["sh", "-c", "npm ci && npm run dev"]
+    workingDir: /app
+    sync:
+      - path: ./:/app
+        excludePaths:
+          - node_modules/
+          - .next/
+    ports:
+      - port: "57163"
+    terminal: {}
